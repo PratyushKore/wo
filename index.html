@@ -1,0 +1,1126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Workout Plan Tracker</title>
+
+  <style>
+    :root{
+      color-scheme: dark;
+
+      --bg: #0b0f14;
+      --panel: #0f1620;
+      --panel-2: #121c28;
+      --text: #e7eef8;
+      --muted: #a9b6c7;
+      --border: #233244;
+      --accent: #63b3ff;
+      --good: #80ffb8;
+      --danger: #ff6b6b;
+      --shadow: rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color: var(--text);
+      line-height:1.4;
+      background:
+        radial-gradient(1200px 600px at 30% -10%, rgba(99,179,255,0.12), transparent 60%),
+        radial-gradient(900px 450px at 90% 10%, rgba(128,255,184,0.08), transparent 55%),
+        var(--bg);
+    }
+
+    .app{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+      background: rgba(11,15,20,0.85);
+      border-bottom: 1px solid var(--border);
+    }
+    header .app{
+      padding-top: .75rem;
+      padding-bottom: .75rem;
+    }
+
+    .title-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    h1{
+      margin:0;
+      font-size: 1.15rem;
+      letter-spacing: 0.2px;
+    }
+
+    .status{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      padding: .25rem .55rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: .8rem;
+      color: var(--muted);
+      background: rgba(15,22,32,0.55);
+    }
+    .chip.good{
+      border-color: rgba(128,255,184,0.35);
+      color: rgba(128,255,184,0.95);
+    }
+    .chip.warn{
+      border-color: rgba(255,107,107,0.35);
+      color: rgba(255,107,107,0.95);
+    }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      flex-wrap:wrap;
+      margin-top: .6rem;
+    }
+
+    button, input[type="text"]{
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: .6rem;
+      padding: .55rem .7rem;
+      font-size: .9rem;
+    }
+
+    button{ cursor:pointer; }
+    button:hover{ border-color: rgba(99,179,255,0.55); }
+    button:active{ transform: translateY(1px); }
+
+    button.primary{
+      background: linear-gradient(180deg, rgba(99,179,255,0.22), rgba(99,179,255,0.10));
+      border-color: rgba(99,179,255,0.45);
+    }
+    button.danger{
+      background: rgba(255,107,107,0.12);
+      border-color: rgba(255,107,107,0.35);
+    }
+
+    .small{
+      font-size: .85rem;
+      color: var(--muted);
+    }
+
+    main{
+      padding: 1rem 0 2.5rem;
+    }
+
+    .week-card{
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      background: linear-gradient(180deg, rgba(18,28,40,0.85), rgba(15,22,32,0.85));
+      box-shadow: 0 8px 24px var(--shadow);
+      overflow: hidden;
+      margin: 0 0 1rem;
+    }
+
+    details.week-details > summary{
+      list-style:none;
+      cursor:pointer;
+      padding: .85rem 1rem;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: rgba(15,22,32,0.7);
+      border-bottom: 1px solid var(--border);
+    }
+    details.week-details > summary::-webkit-details-marker{ display:none; }
+
+    .week-title{
+      display:flex;
+      align-items: baseline;
+      gap:.65rem;
+    }
+    .week-title strong{ font-size: 1rem; }
+    .week-title span{ font-size: .85rem; color: var(--muted); }
+
+    .week-body{ padding: .9rem 1rem 1rem; }
+    .week-subtitle{
+      margin: 0 0 .75rem;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .items{
+      display:flex;
+      flex-direction:column;
+      gap: .35rem;
+    }
+
+    .item-row{
+      display:grid;
+      grid-template-columns: 16px 1fr auto;
+      gap: .65rem;
+      align-items:center;
+      padding: .35rem .4rem;
+      border-radius: .75rem;
+    }
+    .item-row:hover{ background: rgba(99,179,255,0.06); }
+
+    .bullet{
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(231,238,248,0.75);
+      margin-left: 4px;
+    }
+
+    .item-text{ font-size: .95rem; }
+
+    .item-row[data-level="1"]{ margin-left: 1.1rem; }
+    .item-row[data-level="1"] .bullet{ background: rgba(231,238,248,0.45); }
+
+    .checks{
+      display:grid;
+      grid-template-columns: repeat(7, 1.25rem);
+      gap: .35rem;
+      align-items:center;
+    }
+
+    .day-labels{
+      color: var(--muted);
+      font-size: .75rem;
+    }
+    .day-labels span{ text-align:center; }
+
+    .day{
+      position: relative;
+      width: 1.25rem;
+      height: 1.25rem;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius: .4rem;
+      border: 1px solid rgba(35,50,68,0.9);
+      background: rgba(11,15,20,0.35);
+    }
+    .day input{
+      width: 1rem;
+      height: 1rem;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Tooltip shows on hover (desktop) and on focus (tap) */
+    .day::after{
+      content: attr(data-tooltip);
+      position:absolute;
+      left: 50%;
+      bottom: 150%;
+      transform: translateX(-50%);
+      padding: .35rem .45rem;
+      border-radius: .5rem;
+      background: rgba(0,0,0,0.92);
+      border: 1px solid rgba(99,179,255,0.25);
+      color: var(--text);
+      font-size: .75rem;
+      width: max-content;
+      max-width: 240px;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity 120ms ease;
+      white-space: nowrap;
+      z-index: 50;
+    }
+    .day:hover::after,
+    .day:focus-within::after{ opacity: 1; }
+
+    .item-row.header{
+      background: rgba(18,28,40,0.55);
+      border: 1px solid rgba(35,50,68,0.65);
+      padding: .55rem .55rem;
+    }
+    .item-row.header:hover{ background: rgba(18,28,40,0.55); }
+    .item-row.header .bullet{ background: transparent; }
+    .item-row.header .item-text{
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    @media (max-width: 640px){
+      .item-row{
+        grid-template-columns: 16px 1fr;
+        grid-template-rows: auto auto;
+        align-items: start;
+      }
+      .checks{ grid-column: 2 / -1; }
+      .item-row.header{ grid-template-columns: 16px 1fr; }
+      .item-row.header .checks{ grid-column: 2 / -1; }
+    }
+
+    .footer-actions{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: .75rem;
+      flex-wrap: wrap;
+      margin-top: 1.25rem;
+      padding: 1rem;
+      border: 1px dashed rgba(35,50,68,0.9);
+      border-radius: 1rem;
+      background: rgba(15,22,32,0.5);
+    }
+    .hint{ color: var(--muted); font-size: .85rem; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="app">
+      <div class="title-row">
+        <h1>Workout Plan Tracker</h1>
+        <div class="status">
+          <span id="syncChip" class="chip warn">Local only</span>
+          <span id="userChip" class="chip" style="display:none"></span>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button id="signInBtn" class="primary" type="button" style="display:none">Sign in with Google (sync)</button>
+        <button id="signOutBtn" type="button" style="display:none">Sign out</button>
+
+        <button id="copyBackupBtn" type="button" title="Copies a JSON backup of your progress to the clipboard">Copy backup JSON</button>
+        <button id="importBackupBtn" type="button" title="Paste a JSON backup to restore progress">Import backup JSON</button>
+
+        <span class="small" id="saveStatus">Saved locally.</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="app">
+      <div id="plan"></div>
+
+      <div class="footer-actions">
+        <div>
+          <button id="addWeekBtn" class="primary" type="button">Add Week (copies Week 16)</button>
+          <button id="resetLocalBtn" class="danger" type="button" title="Clears local progress on this device only">Clear local progress</button>
+        </div>
+        <div class="hint">
+          Tip: Hover (or tap) a checkbox to see the timestamp. To sync across devices on GitHub Pages, enable Firebase below.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    /**
+     * =========================
+     * Optional cross-device sync
+     * =========================
+     * GitHub Pages is static, so localStorage alone won't sync across devices.
+     * This page supports Firebase (Firestore + Google Sign-In) for cloud sync.
+     *
+     * Setup:
+     * 1) Create a Firebase project (Firebase console)
+     * 2) Enable Firestore Database
+     * 3) Enable Authentication -> Sign-in method -> Google
+     * 4) Add your GitHub Pages domain (e.g. yourname.github.io) to:
+     *    Authentication -> Settings -> Authorized domains
+     * 5) Paste your Firebase Web App config below
+     *
+     * Firestore security rules (recommended):
+     *   match /workoutPlans/{uid} {
+     *     allow read, write: if request.auth != null && request.auth.uid == uid;
+     *   }
+     */
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAmYBSNm0I54lyuEDoVvxBCaIAwapZEiYQ",
+      authDomain: "woftp-84365.firebaseapp.com",
+      projectId: "woftp-84365",
+      appId: "1:111270408092:web:8e896a6024e1ecea8da259",
+    };
+    // If FIREBASE_CONFIG stays as placeholders, the tracker still works (localStorage only).
+
+    const STORAGE_KEY = "workoutTracker_v1_state";
+    const CLIENT_ID_KEY = "workoutTracker_v1_clientId";
+
+    const DEFAULT_TOTAL_WEEKS = 16;
+    const DAYS = ["D1","D2","D3","D4","D5","D6","D7"];
+
+    const WEEK_TEMPLATES = [
+      { week: 1,  note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "4 x 15 pushups", level: 1 },
+        { text: "4 x 20 situps", level: 1 },
+        { text: "3 x 3 pullups", level: 1 },
+        { text: "5 minute walk", level: 0 },
+        { text: "1 minute jog", level: 0 },
+        { text: "5 minute walk", level: 0 },
+        { text: "1 minute jog", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 2,  note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "5 x 20 pushups", level: 1 },
+        { text: "5 x 20 situps", level: 1 },
+        { text: "3 x 3 pullups", level: 1 },
+        { text: "5 minute walk", level: 0 },
+        { text: "3 minute jog", level: 0 },
+        { text: "5 minute walk", level: 0 },
+        { text: "3 minute jog", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 3,  note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "5 x 25 pushups", level: 1 },
+        { text: "5 x 25 situps", level: 1 },
+        { text: "3 x 4 pullups", level: 1 },
+        { text: "4 minute walk", level: 0 },
+        { text: "5 minute jog", level: 0 },
+        { text: "4 minute walk", level: 0 },
+        { text: "5 minute jog", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 4,  note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "5 x 25 pushups", level: 1 },
+        { text: "5 x 25 situps", level: 1 },
+        { text: "3 x 4 pullups", level: 1 },
+        { text: "4 minute walk", level: 0 },
+        { text: "5 minute jog", level: 0 },
+        { text: "4 minute walk", level: 0 },
+        { text: "5 minute jog", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 5,  note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "6 x 25 pushups", level: 1 },
+        { text: "6 x 25 situps", level: 1 },
+        { text: "2 x 8 pullups", level: 1 },
+        { text: "4 minute walk", level: 0 },
+        { text: "6 minute jog", level: 0 },
+        { text: "4 minute walk", level: 0 },
+        { text: "6 minute jog", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 6,  note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "6 x 25 pushups", level: 1 },
+        { text: "6 x 25 situps", level: 1 },
+        { text: "2 x 8 pullups", level: 1 },
+        { text: "4 minute walk", level: 0 },
+        { text: "7 minute jog", level: 0 },
+        { text: "4 minute walk", level: 0 },
+        { text: "7 minute jog", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 7,  note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "6 x 30 pushups", level: 1 },
+        { text: "6 x 30 situps", level: 1 },
+        { text: "2 x 10 pullups", level: 1 },
+        { text: "4 minute walk", level: 0 },
+        { text: "8 minute jog", level: 0 },
+        { text: "4 minute walk", level: 0 },
+        { text: "8 minute jog", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 8,  note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "6 x 30 pushups", level: 1 },
+        { text: "6 x 30 situps", level: 1 },
+        { text: "2 x 10 pullups", level: 1 },
+        { text: "4 minute walk", level: 0 },
+        { text: "9 minute jog", level: 0 },
+        { text: "4 minute walk", level: 0 },
+        { text: "9 minute jog", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 9,  note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "6 x 30 pushups", level: 1 },
+        { text: "6 x 30 situps", level: 1 },
+        { text: "3 x 10 pullups", level: 1 },
+        { text: "4 minute walk", level: 0 },
+        { text: "13 minute run", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 10, note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "No workout this week", level: 0 },
+        { text: "4 minute walk", level: 0 },
+        { text: "15 minute run", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 11, note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "6 x 30 pushups", level: 1 },
+        { text: "6 x 35 situps", level: 1 },
+        { text: "3 x 10 pullups", level: 1 },
+        { text: "3 x 20 dips", level: 1 },
+        { text: "4 minute walk", level: 0 },
+        { text: "17 minute run", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 12, note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "6 x 30 pushups", level: 1 },
+        { text: "6 x 35 situps", level: 1 },
+        { text: "3 x 10 pullups", level: 1 },
+        { text: "3 x 20 dips", level: 1 },
+        { text: "1 minute walk", level: 0 },
+        { text: "17 minute run", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 13, note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "10 x 20 pushups", level: 1 },
+        { text: "10 x 25 situps", level: 1 },
+        { text: "4 x 10 pullups", level: 1 },
+        { text: "10 x 15 dips", level: 1 },
+        { text: "2 minute walk", level: 0 },
+        { text: "2 minute jog", level: 0 },
+        { text: "17 minute run", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 14, note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "10 x 20 pushups", level: 1 },
+        { text: "10 x 25 situps", level: 1 },
+        { text: "4 x 10 pullups", level: 1 },
+        { text: "10 x 15 dips", level: 1 },
+        { text: "3 minute jog", level: 0 },
+        { text: "17 minute run", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 15, note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "15 x 20 pushups", level: 1 },
+        { text: "15 x 25 situps", level: 1 },
+        { text: "4 x 12 pullups", level: 1 },
+        { text: "15 x 15 dips", level: 1 },
+        { text: "3 minute jog", level: 0 },
+        { text: "17 minute run", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+      { week: 16, note: "Complete the following in one session 3-5 times a week:", items: [
+        { text: "5 minute stretch/warm-up", level: 0 },
+        { text: "Workout:", level: 0 },
+        { text: "20 x 20 pushups", level: 1 },
+        { text: "25 x 25 situps", level: 1 },
+        { text: "5 x 12 pullups", level: 1 },
+        { text: "20 x 15 dips", level: 1 },
+        { text: "3 minute jog", level: 0 },
+        { text: "17 minute run", level: 0 },
+        { text: "3-5 minute walk", level: 0 },
+        { text: "2 minute stretch", level: 0 },
+      ]},
+    ];
+
+    function getWeekTemplate(weekNumber){
+      if (weekNumber <= WEEK_TEMPLATES.length) return WEEK_TEMPLATES[weekNumber - 1];
+      const base = WEEK_TEMPLATES[WEEK_TEMPLATES.length - 1];
+      return {
+        week: weekNumber,
+        note: base.note + " (copied from Week 16)",
+        items: base.items.map(it => ({...it})),
+      };
+    }
+
+    function cryptoRandomId(len = 20){
+      const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      const bytes = new Uint8Array(len);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, b => alphabet[b % alphabet.length]).join("");
+    }
+
+    function ensureClientId(){
+      const existing = localStorage.getItem(CLIENT_ID_KEY);
+      if (existing) return existing;
+      const id = "c_" + cryptoRandomId(12);
+      localStorage.setItem(CLIENT_ID_KEY, id);
+      return id;
+    }
+    const clientId = ensureClientId();
+
+    function safeParse(json){
+      try { return JSON.parse(json); } catch { return null; }
+    }
+
+    function clampInt(value, min, max){
+      const n = Number(value);
+      if (!Number.isFinite(n)) return null;
+      const i = Math.trunc(n);
+      return Math.min(max, Math.max(min, i));
+    }
+
+    function normalizeState(raw){
+      const v = 1;
+      const totalWeeks = clampInt(raw?.totalWeeks, 1, 500) ?? DEFAULT_TOTAL_WEEKS;
+      const checks = (raw?.checks && typeof raw.checks === "object") ? raw.checks : {};
+      return { v, totalWeeks, checks };
+    }
+
+    function nowMs(){ return Date.now(); }
+
+    function formatTime(ms){
+      if (!ms) return "";
+      const d = new Date(ms);
+      return d.toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    function tooltipForRecord(rec){
+      if (!rec) return "Not checked yet";
+      if (rec.c) return `Checked: ${formatTime(rec.a || rec.u)}`;
+      if (rec.a) return `Last checked: ${formatTime(rec.a)}`;
+      return "Not checked yet";
+    }
+
+    let state = (() => {
+      const raw = safeParse(localStorage.getItem(STORAGE_KEY));
+      return normalizeState(raw);
+    })();
+
+    function setSaveStatus(text, isError = false){
+      const el = document.getElementById("saveStatus");
+      el.textContent = text;
+      el.style.color = isError ? "rgba(255,107,107,0.95)" : "";
+    }
+
+    function saveLocalState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      setSaveStatus("Saved locally.");
+    }
+
+    const checkboxById = new Map(); // id -> input
+    const wrapperById = new Map();  // id -> .day wrapper (tooltip)
+
+    function checkboxId(weekNumber, itemIndex, dayIndex){
+      return `w${weekNumber}_i${itemIndex}_d${dayIndex}`;
+    }
+
+    function renderAllWeeks(){
+      checkboxById.clear();
+      wrapperById.clear();
+
+      const planEl = document.getElementById("plan");
+      planEl.innerHTML = "";
+
+      for (let w = 1; w <= state.totalWeeks; w++){
+        planEl.appendChild(renderWeekCard(w));
+      }
+    }
+
+    function renderWeekCard(weekNumber){
+      const template = getWeekTemplate(weekNumber);
+
+      const card = document.createElement("section");
+      card.className = "week-card";
+      card.id = `week-${weekNumber}`;
+
+      const details = document.createElement("details");
+      details.className = "week-details";
+      details.open = (weekNumber === 1) || (weekNumber > 16);
+
+      const summary = document.createElement("summary");
+      const title = document.createElement("div");
+      title.className = "week-title";
+
+      const strong = document.createElement("strong");
+      strong.textContent = `Week ${weekNumber}`;
+
+      const subtitle = document.createElement("span");
+      subtitle.textContent = `${template.items.length} items`;
+
+      title.appendChild(strong);
+      title.appendChild(subtitle);
+
+      const right = document.createElement("span");
+      right.className = "small";
+      right.textContent = details.open ? "Tap to collapse" : "Tap to expand";
+
+      summary.appendChild(title);
+      summary.appendChild(right);
+
+      details.addEventListener("toggle", () => {
+        right.textContent = details.open ? "Tap to collapse" : "Tap to expand";
+      });
+
+      const body = document.createElement("div");
+      body.className = "week-body";
+
+      const note = document.createElement("p");
+      note.className = "week-subtitle";
+      note.textContent = template.note;
+      body.appendChild(note);
+
+      const items = document.createElement("div");
+      items.className = "items";
+
+      const headerRow = document.createElement("div");
+      items.appendChild(headerRow);
+
+      template.items.forEach((it, idx) => {
+        items.appendChild(renderItemRow(weekNumber, idx, it));
+      });
+
+      body.appendChild(items);
+
+      details.appendChild(summary);
+      details.appendChild(body);
+      card.appendChild(details);
+
+      return card;
+    }
+
+    function renderItemRow(weekNumber, itemIndex, item){
+      const row = document.createElement("div");
+      row.className = "item-row";
+      row.dataset.level = String(item.level ?? 0);
+
+      const bullet = document.createElement("div");
+      bullet.className = "bullet";
+      bullet.setAttribute("aria-hidden", "true");
+
+      const text = document.createElement("div");
+      text.className = "item-text";
+      text.textContent = item.text;
+
+      const checks = document.createElement("div");
+      checks.className = "checks";
+
+      for (let d = 0; d < 7; d++){
+        const id = checkboxId(weekNumber, itemIndex, d);
+        const rec = state.checks[id];
+
+        const wrap = document.createElement("div");
+        wrap.className = "day";
+        wrap.dataset.tooltip = tooltipForRecord(rec);
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = Boolean(rec?.c);
+        cb.dataset.cbid = id;
+        cb.setAttribute("aria-label", `${DAYS[d]} for Week ${weekNumber} – ${item.text}`);
+
+        cb.addEventListener("change", () => handleCheckboxToggle(id, cb.checked));
+
+        checkboxById.set(id, cb);
+        wrapperById.set(id, wrap);
+
+        wrap.appendChild(cb);
+        checks.appendChild(wrap);
+      }
+
+      row.appendChild(bullet);
+      row.appendChild(text);
+      row.appendChild(checks);
+
+      return row;
+    }
+
+    function updateCheckboxUI(id){
+      const cb = checkboxById.get(id);
+      const wrap = wrapperById.get(id);
+      if (!cb || !wrap) return;
+
+      const rec = state.checks[id];
+      cb.checked = Boolean(rec?.c);
+      wrap.dataset.tooltip = tooltipForRecord(rec);
+    }
+
+    function mergeChecks(localChecks, remoteChecks){
+      const out = { ...localChecks };
+      for (const [id, r] of Object.entries(remoteChecks || {})){
+        const l = localChecks?.[id];
+        const ru = Number(r?.u || 0);
+        const lu = Number(l?.u || 0);
+        if (!l || ru > lu) out[id] = r;
+      }
+      return out;
+    }
+
+    function handleCheckboxToggle(id, checked){
+      const now = nowMs();
+      const prev = state.checks[id] || {};
+      const next = {
+        c: checked,
+        a: checked ? now : (prev.a ?? null), // keep last "checked at" even if unchecked
+        u: now,                              // last update time (used to resolve conflicts across devices)
+      };
+      state.checks[id] = next;
+
+      updateCheckboxUI(id);
+      saveLocalState();
+
+      if (cloud.ready){
+        cloud.saveCheckbox(id, next).catch((err) => {
+          console.error(err);
+          setSaveStatus("Cloud sync failed (saved locally).", true);
+        });
+      }
+    }
+
+    function addWeek(){
+      state.totalWeeks += 1;
+      const planEl = document.getElementById("plan");
+      planEl.appendChild(renderWeekCard(state.totalWeeks));
+      saveLocalState();
+
+      if (cloud.ready){
+        cloud.saveMeta({ totalWeeks: state.totalWeeks }).catch((err) => {
+          console.error(err);
+          setSaveStatus("Cloud sync failed (saved locally).", true);
+        });
+      }
+
+      document.getElementById(`week-${state.totalWeeks}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function clearLocalOnly(){
+      if (!confirm("Clear local progress on this device? (Cloud data, if any, stays.)")) return;
+      state = normalizeState({ totalWeeks: state.totalWeeks, checks: {} });
+      saveLocalState();
+      renderAllWeeks();
+    }
+
+    async function copyBackupJSON(){
+      const payload = JSON.stringify({ exportedAt: new Date().toISOString(), state }, null, 2);
+      try {
+        await navigator.clipboard.writeText(payload);
+        setSaveStatus("Backup JSON copied to clipboard.");
+      } catch {
+        prompt("Copy your backup JSON:", payload);
+      }
+    }
+
+    async function importBackupJSON(){
+      const text = prompt("Paste your backup JSON:");
+      if (!text) return;
+      const parsed = safeParse(text);
+      if (!parsed?.state){
+        alert("That doesn't look like a valid backup.");
+        return;
+      }
+
+      const incoming = normalizeState(parsed.state);
+      state.totalWeeks = Math.max(state.totalWeeks, incoming.totalWeeks);
+      state.checks = mergeChecks(state.checks, incoming.checks);
+
+      saveLocalState();
+      renderAllWeeks();
+
+      if (cloud.ready){
+        try {
+          await cloud.pushFullState();
+          setSaveStatus("Imported and synced to cloud.");
+        } catch (err) {
+          console.error(err);
+          setSaveStatus("Imported locally (cloud sync failed).", true);
+        }
+      } else {
+        setSaveStatus("Imported locally.");
+      }
+    }
+
+    // --------------------------
+    // Firebase cloud sync layer
+    // --------------------------
+    const cloud = {
+      enabled: false,
+      ready: false,
+      user: null,
+      db: null,
+      auth: null,
+      planRef: null,
+      unsub: null,
+
+      async initIfConfigured(){
+        const looksConfigured =
+          FIREBASE_CONFIG &&
+          typeof FIREBASE_CONFIG.apiKey === "string" &&
+          FIREBASE_CONFIG.apiKey &&
+          !FIREBASE_CONFIG.apiKey.startsWith("YOUR_");
+
+        if (!looksConfigured){
+          setSyncChip("Local only", "warn");
+          return;
+        }
+
+        this.enabled = true;
+        document.getElementById("signInBtn").style.display = "";
+        setSyncChip("Cloud available (sign in)", "warn");
+
+        const [{ initializeApp }, firestoreMod, authMod] = await Promise.all([
+          import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+          import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"),
+          import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"),
+        ]);
+
+        const {
+          getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp
+        } = firestoreMod;
+
+        const {
+          getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult,
+          onAuthStateChanged, signOut, setPersistence, browserLocalPersistence
+        } = authMod;
+
+        const app = initializeApp(FIREBASE_CONFIG);
+        this.db = getFirestore(app);
+
+        this.auth = getAuth(app);
+        try { await setPersistence(this.auth, browserLocalPersistence); } catch {}
+
+        this._doc = doc;
+        this._getDoc = getDoc;
+        this._setDoc = setDoc;
+        this._updateDoc = updateDoc;
+        this._onSnapshot = onSnapshot;
+        this._serverTimestamp = serverTimestamp;
+
+        // Buttons
+        document.getElementById("signInBtn").addEventListener("click", async () => {
+          try {
+            const provider = new GoogleAuthProvider();
+            await signInWithRedirect(this.auth, provider);
+          } catch (err){
+            console.error(err);
+            setSaveStatus("Sign-in failed.", true);
+          }
+        });
+
+        document.getElementById("signOutBtn").addEventListener("click", async () => {
+          try { await signOut(this.auth); }
+          catch (err){ console.error(err); setSaveStatus("Sign-out failed.", true); }
+        });
+
+        // Surface redirect errors, if any
+        try { await getRedirectResult(this.auth); }
+        catch (err){
+          if (err?.code){
+            console.error(err);
+            setSaveStatus(`Sign-in error: ${err.code}`, true);
+          }
+        }
+
+        onAuthStateChanged(this.auth, (user) => this._onAuth(user));
+      },
+
+      async _onAuth(user){
+        this.user = user;
+
+        const userChip = document.getElementById("userChip");
+        const signOutBtn = document.getElementById("signOutBtn");
+        const signInBtn = document.getElementById("signInBtn");
+
+        if (!user){
+          this.ready = false;
+          this.planRef = null;
+          this.unsub?.();
+          this.unsub = null;
+
+          userChip.style.display = "none";
+          signOutBtn.style.display = "none";
+          signInBtn.style.display = "";
+
+          setSyncChip("Cloud available (sign in)", "warn");
+          return;
+        }
+
+        // Signed in
+        userChip.style.display = "";
+        userChip.textContent = user.email ? `Signed in: ${user.email}` : "Signed in";
+        signOutBtn.style.display = "";
+        signInBtn.style.display = "none";
+
+        setSyncChip("Syncing…", "warn");
+
+        // Doc id = uid => easy + secure rules
+        this.planRef = this._doc(this.db, "workoutPlans", user.uid);
+
+        await this._initialSync();
+
+        this.unsub?.();
+        this.unsub = this._onSnapshot(this.planRef, (snap) => {
+          if (!snap.exists()) return;
+          const remote = normalizeState(snap.data());
+          this._applyRemote(remote);
+        });
+
+        this.ready = true;
+        setSyncChip("Cloud synced", "good");
+        setSaveStatus("Synced.");
+      },
+
+      async _initialSync(){
+        const snap = await this._getDoc(this.planRef);
+
+        if (!snap.exists()){
+          await this._setDoc(this.planRef, {
+            v: state.v,
+            totalWeeks: state.totalWeeks,
+            checks: state.checks,
+            createdAt: this._serverTimestamp(),
+            updatedAt: this._serverTimestamp(),
+            lastWriteClient: clientId,
+          });
+          return;
+        }
+
+        const remote = normalizeState(snap.data());
+
+        const merged = {
+          v: 1,
+          totalWeeks: Math.max(state.totalWeeks, remote.totalWeeks),
+          checks: mergeChecks(state.checks, remote.checks),
+        };
+
+        state = merged;
+        saveLocalState();
+        renderAllWeeks();
+
+        await this._setDoc(this.planRef, {
+          v: state.v,
+          totalWeeks: state.totalWeeks,
+          checks: state.checks,
+          updatedAt: this._serverTimestamp(),
+          lastWriteClient: clientId,
+        }, { merge: true });
+      },
+
+      _applyRemote(remote){
+        if (remote.totalWeeks > state.totalWeeks){
+          const old = state.totalWeeks;
+          state.totalWeeks = remote.totalWeeks;
+          for (let w = old + 1; w <= state.totalWeeks; w++){
+            document.getElementById("plan").appendChild(renderWeekCard(w));
+          }
+        }
+
+        for (const [id, r] of Object.entries(remote.checks || {})){
+          const l = state.checks[id];
+          const ru = Number(r?.u || 0);
+          const lu = Number(l?.u || 0);
+          if (!l || ru > lu){
+            state.checks[id] = r;
+            updateCheckboxUI(id);
+          }
+        }
+
+        saveLocalState();
+        setSaveStatus("Synced.");
+      },
+
+      async saveCheckbox(id, rec){
+        if (!this.planRef) return;
+        setSaveStatus("Saving…");
+        await this._updateDoc(this.planRef, {
+          [`checks.${id}`]: rec,
+          totalWeeks: state.totalWeeks,
+          updatedAt: this._serverTimestamp(),
+          lastWriteClient: clientId,
+        });
+        setSaveStatus("Synced.");
+      },
+
+      async saveMeta(meta){
+        if (!this.planRef) return;
+        setSaveStatus("Saving…");
+        await this._updateDoc(this.planRef, {
+          ...(meta.totalWeeks ? { totalWeeks: meta.totalWeeks } : {}),
+          updatedAt: this._serverTimestamp(),
+          lastWriteClient: clientId,
+        });
+        setSaveStatus("Synced.");
+      },
+
+      async pushFullState(){
+        if (!this.planRef) return;
+        setSaveStatus("Saving…");
+        await this._setDoc(this.planRef, {
+          v: state.v,
+          totalWeeks: state.totalWeeks,
+          checks: state.checks,
+          updatedAt: this._serverTimestamp(),
+          lastWriteClient: clientId,
+        }, { merge: true });
+        setSaveStatus("Synced.");
+      }
+    };
+
+    function setSyncChip(text, kind){
+      const chip = document.getElementById("syncChip");
+      chip.textContent = text;
+      chip.classList.remove("good","warn");
+      chip.classList.add(kind === "good" ? "good" : "warn");
+    }
+
+    // Boot
+    renderAllWeeks();
+    saveLocalState();
+
+    document.getElementById("addWeekBtn").addEventListener("click", addWeek);
+    document.getElementById("resetLocalBtn").addEventListener("click", clearLocalOnly);
+    document.getElementById("copyBackupBtn").addEventListener("click", copyBackupJSON);
+    document.getElementById("importBackupBtn").addEventListener("click", importBackupJSON);
+
+    cloud.initIfConfigured().catch((err) => {
+      console.error(err);
+      setSyncChip("Cloud init failed (local only)", "warn");
+    });
+  </script>
+</body>
+</html>
