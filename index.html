@@ -86,7 +86,7 @@ input[type=checkbox]{
 const GITHUB_OWNER  = "PratyushKore";
 const GITHUB_REPO   = "wo";
 const GITHUB_BRANCH = "main";
-const SAVEFILE_PATH = "savefile.txt";
+const GITHUB_PATH = "savefile.txt";
 const GITHUB_TOKEN  = "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";
 
 /* =========================
@@ -295,7 +295,7 @@ async function gh(method,url,body){
   return fetch(url,{
     method,
     headers:{
-      Authorization:"Bearer "+GH_TOKEN,
+      Authorization:"Bearer "+GITHUB_TOKEN,
       Accept:"application/vnd.github+json"
     },
     body:body?JSON.stringify(body):null
@@ -303,7 +303,7 @@ async function gh(method,url,body){
 }
 
 async function pull(){
-  const u=`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}?ref=${GH_BRANCH}`;
+  const u=`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`;
   const d=await gh("GET",u);
   decodeSave(atob(d.content));
   render();
@@ -317,13 +317,13 @@ function schedulePush(){
 }
 
 async function push(){
-  const u=`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}`;
+  const u=`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}`;
   const cur=await gh("GET",u);
   await gh("PUT",u,{
     message:"Update workout save",
     content:btoa(encodeSave()),
     sha:cur.sha,
-    branch:GH_BRANCH
+    branch:GITHUB_BRANCH
   });
   document.getElementById("status").textContent="Saved to GitHub";
 }
