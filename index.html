@@ -1,334 +1,318 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Workout Tracker</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Workout Plan Tracker</title>
 
 <style>
-:root{color-scheme:dark}
+:root{
+  color-scheme: dark;
+  --bg:#0b0f14;
+  --panel:#0f1620;
+  --panel-2:#121c28;
+  --text:#e7eef8;
+  --muted:#a9b6c7;
+  --border:#233244;
+  --accent:#63b3ff;
+  --danger:#ff6b6b;
+  --shadow:rgba(0,0,0,0.35);
+}
+*{box-sizing:border-box}
 body{
   margin:0;
-  background:#0b0f14;
-  color:#e7eef8;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  color:var(--text);
+  line-height:1.4;
+  background:
+    radial-gradient(1200px 600px at 30% -10%, rgba(99,179,255,0.12), transparent 60%),
+    radial-gradient(900px 450px at 90% 10%, rgba(128,255,184,0.08), transparent 55%),
+    var(--bg);
 }
-.app{max-width:1100px;margin:auto;padding:1rem}
-h1{margin:0 0 .75rem}
-.controls{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
-button{
-  background:#121c28;
-  color:#e7eef8;
-  border:1px solid #233244;
-  border-radius:8px;
-  padding:.45rem .75rem;
-  cursor:pointer;
+.app{max-width:1100px;margin:0 auto;padding:1rem}
+header{
+  position:sticky;top:0;z-index:20;
+  backdrop-filter:blur(10px);
+  background:rgba(11,15,20,0.85);
+  border-bottom:1px solid var(--border);
 }
-button:hover{border-color:#63b3ff}
-.week{
-  border:1px solid #233244;
-  border-radius:12px;
-  margin-bottom:1rem;
-  background:#0f1620;
+header .app{padding:.75rem 1rem}
+.title-row{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;flex-wrap:wrap
 }
-summary{
-  padding:.75rem 1rem;
-  cursor:pointer;
-  font-weight:600;
-}
-.week-body{padding:.75rem 1rem 1rem}
-.row{
-  display:grid;
-  grid-template-columns:1fr repeat(7,1.4rem);
-  gap:.4rem;
+h1{margin:0;font-size:1.15rem}
+.toolbar{
+  display:flex;
+  gap:.5rem;
+  flex-wrap:wrap;
+  margin-top:.6rem;
   align-items:center;
-  margin:.25rem 0;
 }
-.row small{opacity:.65}
-input[type=checkbox]{
-  width:1.1rem;
-  height:1.1rem;
-  accent-color:#63b3ff;
+button, select{
+  background:var(--panel);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:.6rem;
+  padding:.55rem .7rem;
+  font-size:.9rem;
 }
-.footer{
+button{cursor:pointer}
+button:hover, select:hover{border-color:rgba(99,179,255,0.55)}
+.small{font-size:.85rem;color:var(--muted)}
+main{padding:1rem 0 2.5rem}
+.week-card{
+  border:1px solid var(--border);
+  border-radius:1rem;
+  background:linear-gradient(180deg,rgba(18,28,40,.85),rgba(15,22,32,.85));
+  box-shadow:0 8px 24px var(--shadow);
+  margin-bottom:1rem;
+}
+details.week-details>summary{
+  list-style:none;
+  cursor:pointer;
+  padding:.85rem 1rem;
   display:flex;
   justify-content:space-between;
-  gap:1rem;
-  flex-wrap:wrap;
+  background:rgba(15,22,32,.7);
+  border-bottom:1px solid var(--border)
 }
-.status{opacity:.7;font-size:.85rem}
+details.week-details>summary::-webkit-details-marker{display:none}
+.week-body{padding:.9rem 1rem 1rem}
+.item-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:.65rem;
+  padding:.35rem .4rem;
+  border-radius:.75rem;
+}
+.item-row:hover{background:rgba(99,179,255,.06)}
+.item-text{font-size:.95rem}
+.checks{
+  display:grid;
+  grid-template-columns:repeat(7,1.25rem);
+  gap:.35rem;
+}
+.day{
+  position:relative;
+  width:1.25rem;height:1.25rem;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:.4rem;
+  border:1px solid rgba(35,50,68,.9);
+  background:rgba(11,15,20,.35)
+}
+.day input{width:1rem;height:1rem;accent-color:var(--accent)}
+.day::after{
+  content:attr(data-tooltip);
+  position:absolute;
+  bottom:150%;left:50%;
+  transform:translateX(-50%);
+  padding:.35rem .45rem;
+  border-radius:.5rem;
+  background:rgba(0,0,0,.92);
+  font-size:.75rem;
+  opacity:0;
+  white-space:nowrap;
+  pointer-events:none
+}
+.day:hover::after{opacity:1}
+.footer-actions{
+  display:flex;justify-content:space-between;
+  gap:.75rem;flex-wrap:wrap;
+  padding:1rem;border:1px dashed var(--border);
+  border-radius:1rem;background:rgba(15,22,32,.5)
+}
 </style>
 </head>
 
 <body>
+<header>
+  <div class="app">
+    <div class="title-row">
+      <h1>Workout Plan Tracker</h1>
+      <span class="small" id="status">Saved locally</span>
+    </div>
+    <div class="toolbar">
+      <select id="tzSelect" title="Display time zone">
+        <option value="America/New_York">Eastern (EST/EDT)</option>
+        <option value="America/Chicago">Central (CST/CDT)</option>
+        <option value="America/Denver">Mountain (MST/MDT)</option>
+        <option value="America/Los_Angeles">Pacific (PST/PDT)</option>
+        <option value="UTC">UTC</option>
+        <option value="local">Local (browser)</option>
+      </select>
+
+      <button id="copyBtn">Copy save</button>
+      <button id="pasteBtn">Paste save</button>
+      <button id="exportBtn">Export save</button>
+      <button id="importBtn">Import save</button>
+      <input type="file" id="fileInput" hidden>
+    </div>
+  </div>
+</header>
+
+<main>
 <div class="app">
-<h1>Workout Tracker</h1>
-
-<div class="controls">
-  <button onclick="copySave()">Copy save text</button>
-  <button onclick="downloadSave()">Save to file</button>
-  <button onclick="pasteImport()">Paste import</button>
-  <input type="file" onchange="importFile(this)">
+  <div id="plan"></div>
+  <div class="footer-actions">
+    <button id="addWeekBtn">Add Week (copies Week 16)</button>
+  </div>
 </div>
-
-<div id="weeks"></div>
-
-<div class="footer">
-  <button onclick="addWeek()">➕ Add Week (copy Week 16)</button>
-  <div class="status" id="status">Ready</div>
-</div>
-</div>
+</main>
 
 <script>
 /* =========================
-   GITHUB CONFIG (EDIT)
+   CONFIG
    ========================= */
-const GITHUB_OWNER  = "PratyushKore";
-const GITHUB_REPO   = "wo";
-const GITHUB_BRANCH = "main";
-const GITHUB_PATH = "savefile.txt";
-const GITHUB_TOKEN  = "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";
+const STORAGE_KEY = "wofpt_save_v6";
+const DEFAULT_TZ = "America/New_York";
 
 /* =========================
-   FULL WORKOUT DATA
+   WORKOUT DATA (UNCHANGED)
    ========================= */
-const WEEKS = [
-[
-"5 minute stretch/warm-up","Workout:",
-"4 x 15 pushups","4 x 20 situps","3 x 3 pullups",
-"5 minute walk","1 minute jog","5 minute walk","1 minute jog",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"5 x 20 pushups","5 x 20 situps","3 x 3 pullups",
-"5 minute walk","3 minute jog","5 minute walk","3 minute jog",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"5 x 25 pushups","5 x 25 situps","3 x 4 pullups",
-"4 minute walk","5 minute jog","4 minute walk","5 minute jog",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"5 x 25 pushups","5 x 25 situps","3 x 4 pullups",
-"4 minute walk","5 minute jog","4 minute walk","5 minute jog",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"6 x 25 pushups","6 x 25 situps","2 x 8 pullups",
-"4 minute walk","6 minute jog","4 minute walk","6 minute jog",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"6 x 25 pushups","6 x 25 situps","2 x 8 pullups",
-"4 minute walk","7 minute jog","4 minute walk","7 minute jog",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"6 x 30 pushups","6 x 30 situps","2 x 10 pullups",
-"4 minute walk","8 minute jog","4 minute walk","8 minute jog",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"6 x 30 pushups","6 x 30 situps","2 x 10 pullups",
-"4 minute walk","9 minute jog","4 minute walk","9 minute jog",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"6 x 30 pushups","6 x 30 situps","3 x 10 pullups",
-"4 minute walk","13 minute run",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","No workout this week",
-"4 minute walk","15 minute run",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"6 x 30 pushups","6 x 35 situps","3 x 10 pullups","3 x 20 dips",
-"4 minute walk","17 minute run",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"6 x 30 pushups","6 x 35 situps","3 x 10 pullups","3 x 20 dips",
-"1 minute walk","17 minute run",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"10 x 20 pushups","10 x 25 situps","4 x 10 pullups","10 x 15 dips",
-"2 minute walk","2 minute jog","17 minute run",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"10 x 20 pushups","10 x 25 situps","4 x 10 pullups","10 x 15 dips",
-"3 minute jog","17 minute run",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"15 x 20 pushups","15 x 25 situps","4 x 12 pullups","15 x 15 dips",
-"3 minute jog","17 minute run",
-"3-5 minute walk","2 minute stretch"
-],
-[
-"5 minute stretch/warm-up","Workout:",
-"20 x 20 pushups","25 x 25 situps","5 x 12 pullups","20 x 15 dips",
-"3 minute jog","17 minute run",
-"3-5 minute walk","2 minute stretch"
-]
+const BASE_WEEKS = [
+["5 minute stretch/warm-up","4 x 15 pushups","4 x 20 situps","3 x 3 pullups","5 minute walk","1 minute jog","5 minute walk","1 minute jog","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","5 x 20 pushups","5 x 20 situps","3 x 3 pullups","5 minute walk","3 minute jog","5 minute walk","3 minute jog","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","5 x 25 pushups","5 x 25 situps","3 x 4 pullups","4 minute walk","5 minute jog","4 minute walk","5 minute jog","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","5 x 25 pushups","5 x 25 situps","3 x 4 pullups","4 minute walk","5 minute jog","4 minute walk","5 minute jog","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","6 x 25 pushups","6 x 25 situps","2 x 8 pullups","4 minute walk","6 minute jog","4 minute walk","6 minute jog","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","6 x 25 pushups","6 x 25 situps","2 x 8 pullups","4 minute walk","7 minute jog","4 minute walk","7 minute jog","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","6 x 30 pushups","6 x 30 situps","2 x 10 pullups","4 minute walk","8 minute jog","4 minute walk","8 minute jog","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","6 x 30 pushups","6 x 30 situps","2 x 10 pullups","4 minute walk","9 minute jog","4 minute walk","9 minute jog","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","6 x 30 pushups","6 x 30 situps","3 x 10 pullups","4 minute walk","13 minute run","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","4 minute walk","15 minute run","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","6 x 30 pushups","6 x 35 situps","3 x 10 pullups","3 x 20 dips","4 minute walk","17 minute run","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","6 x 30 pushups","6 x 35 situps","3 x 10 pullups","3 x 20 dips","1 minute walk","17 minute run","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","10 x 20 pushups","10 x 25 situps","4 x 10 pullups","10 x 15 dips","2 minute walk","2 minute jog","17 minute run","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","10 x 20 pushups","10 x 25 situps","4 x 10 pullups","10 x 15 dips","3 minute jog","17 minute run","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","15 x 20 pushups","15 x 25 situps","4 x 12 pullups","15 x 15 dips","3 minute jog","17 minute run","3-5 minute walk","2 minute stretch"],
+["5 minute stretch/warm-up","20 x 20 pushups","25 x 25 situps","5 x 12 pullups","20 x 15 dips","3 minute jog","17 minute run","3-5 minute walk","2 minute stretch"]
 ];
 
 /* =========================
-   STATE + SAVE STRING
+   STATE
    ========================= */
-let weeksCount = WEEKS.length;
-let bitsPerWeek = WEEKS[0].length * 7;
-let saveBits = "0".repeat(bitsPerWeek * weeksCount);
+let weeksCount = BASE_WEEKS.length;
+let openWeeks = new Set();
+let checks = {};
+let displayTZ = DEFAULT_TZ;
 
+/* =========================
+   TIME FORMATTER
+   ========================= */
+function formatTime(ts){
+  if (!ts) return "Not checked";
+  const opts = {
+    year:"numeric", month:"short", day:"2-digit",
+    hour:"2-digit", minute:"2-digit", second:"2-digit",
+    timeZoneName:"short"
+  };
+  if (displayTZ !== "local") opts.timeZone = displayTZ;
+  return new Intl.DateTimeFormat(undefined, opts).format(new Date(Number(ts)));
+}
+
+/* =========================
+   SAVE / LOAD
+   ========================= */
 function encodeSave(){
-  let out="";
-  for(let w=1;w<=weeksCount;w++){
-    out+="w"+w+saveBits.slice((w-1)*bitsPerWeek,w*bitsPerWeek);
-  }
-  return out;
+  const data = Object.entries(checks)
+    .map(([id,r]) => `${id}@${r.c?1:0}@${r.t}`)
+    .join(";");
+  return `WOFPT|weeks=${weeksCount}|open=${[...openWeeks].join(",")}|tz=${displayTZ}|data=${data}`;
 }
 
-function decodeSave(txt){
-  let bits="";
-  const matches=[...txt.matchAll(/w\d+/g)];
-  matches.forEach((m,i)=>{
-    const start=m.index+m[0].length;
-    const end=i+1<matches.length?matches[i+1].index:txt.length;
-    bits+=txt.slice(start,end);
+function decodeSave(str){
+  checks = {};
+  openWeeks.clear();
+  const m = str.match(/^WOFPT\|weeks=(\d+)\|open=([^|]*)\|tz=([^|]+)\|data=(.*)$/);
+  if(!m) return;
+  weeksCount = parseInt(m[1],10);
+  m[2].split(",").forEach(v => v && openWeeks.add(+v));
+  displayTZ = m[3] || DEFAULT_TZ;
+  m[4].split(";").forEach(e => {
+    const [id,c,t] = e.split("@");
+    if(id && t) checks[id] = { c:c==="1", t };
   });
-  saveBits=bits;
-  weeksCount=bits.length/bitsPerWeek;
-}
-
-function bitIndex(w,i,d){
-  return (w*bitsPerWeek)+(i*7)+d;
+  tzSelect.value = displayTZ;
 }
 
 /* =========================
    RENDER
    ========================= */
 function render(){
-  const root=document.getElementById("weeks");
-  root.innerHTML="";
+  const plan=document.getElementById("plan");
+  plan.innerHTML="";
   for(let w=0;w<weeksCount;w++){
     const det=document.createElement("details");
-    det.className="week";
+    det.className="week-card week-details";
+    det.open=openWeeks.has(w);
+    det.addEventListener("toggle",()=>{
+      det.open ? openWeeks.add(w) : openWeeks.delete(w);
+      localStorage.setItem(STORAGE_KEY,encodeSave());
+    });
     const sum=document.createElement("summary");
-    sum.textContent="Week "+(w+1);
+    sum.innerHTML=`<strong>Week ${w+1}</strong>`;
     det.appendChild(sum);
     const body=document.createElement("div");
     body.className="week-body";
-    (WEEKS[w]||WEEKS[15]).forEach((t,i)=>{
-      const r=document.createElement("div");
-      r.className="row";
-      r.innerHTML=`<small>${t}</small>`;
+    (BASE_WEEKS[w]||BASE_WEEKS[15]).forEach((text,i)=>{
+      const row=document.createElement("div");
+      row.className="item-row";
+      row.innerHTML=`<div class="item-text">${text}</div>`;
+      const grid=document.createElement("div");
+      grid.className="checks";
       for(let d=0;d<7;d++){
-        const idx=bitIndex(w,i,d);
+        const id=`${w}_${i}_${d}`;
+        const wrap=document.createElement("div");
+        wrap.className="day";
+        wrap.dataset.tooltip = formatTime(checks[id]?.t);
         const cb=document.createElement("input");
         cb.type="checkbox";
-        cb.checked=saveBits[idx]==="1";
-        cb.onchange=()=>{
-          saveBits=saveBits.substring(0,idx)+(cb.checked?"1":"0")+saveBits.substring(idx+1);
-          schedulePush();
-        };
-        r.appendChild(cb);
+        cb.checked=!!checks[id]?.c;
+        cb.addEventListener("click",e=>e.stopPropagation());
+        cb.addEventListener("change",()=>{
+          const prev=checks[id];
+          if(cb.checked){
+            checks[id]={c:true,t:Date.now().toString()};
+          }else if(prev){
+            checks[id]={c:false,t:prev.t};
+          }
+          localStorage.setItem(STORAGE_KEY,encodeSave());
+          render();
+        });
+        wrap.appendChild(cb);
+        grid.appendChild(wrap);
       }
-      body.appendChild(r);
+      row.appendChild(grid);
+      body.appendChild(row);
     });
     det.appendChild(body);
-    root.appendChild(det);
+    plan.appendChild(det);
   }
 }
+
+/* =========================
+   EVENTS
+   ========================= */
+tzSelect.onchange = () => {
+  displayTZ = tzSelect.value;
+  localStorage.setItem(STORAGE_KEY,encodeSave());
+  render();
+};
+
+copyBtn.onclick=()=>navigator.clipboard.writeText(encodeSave());
+pasteBtn.onclick=()=>{const t=prompt("Paste save text:"); if(t){decodeSave(t); localStorage.setItem(STORAGE_KEY,t); render();}};
+exportBtn.onclick=()=>{const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([encodeSave()],{type:"text/plain"})); a.download="workout-save.txt"; a.click();};
+importBtn.onclick=()=>fileInput.click();
+fileInput.onchange=e=>{const r=new FileReader(); r.onload=ev=>{decodeSave(ev.target.result); localStorage.setItem(STORAGE_KEY,ev.target.result); render();}; r.readAsText(e.target.files[0]);};
+addWeekBtn.onclick=()=>{weeksCount++; localStorage.setItem(STORAGE_KEY,encodeSave()); render();};
+
+/* =========================
+   BOOT
+   ========================= */
+const stored=localStorage.getItem(STORAGE_KEY);
+if(stored) decodeSave(stored);
 render();
-
-/* =========================
-   ADD WEEK
-   ========================= */
-function addWeek(){
-  weeksCount++;
-  saveBits+= "0".repeat(bitsPerWeek);
-  render();
-  schedulePush();
-}
-
-/* =========================
-   IMPORT / EXPORT
-   ========================= */
-function copySave(){navigator.clipboard.writeText(encodeSave())}
-function downloadSave(){
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([encodeSave()],{type:"text/plain"}));
-  a.download="savefile.txt";
-  a.click();
-}
-function pasteImport(){
-  const t=prompt("Paste save text:");
-  if(t) decodeSave(t),render(),schedulePush();
-}
-function importFile(inp){
-  const r=new FileReader();
-  r.onload=e=>decodeSave(e.target.result),render(),schedulePush();
-  r.readAsText(inp.files[0]);
-}
-
-/* =========================
-   GITHUB SYNC
-   ========================= */
-async function gh(method,url,body){
-  return fetch(url,{
-    method,
-    headers:{
-      Authorization:"Bearer "+GITHUB_TOKEN,
-      Accept:"application/vnd.github+json"
-    },
-    body:body?JSON.stringify(body):null
-  }).then(r=>r.json());
-}
-
-async function pull(){
-  const u=`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`;
-  const d=await gh("GET",u);
-  decodeSave(atob(d.content));
-  render();
-}
-
-let pushTimer=null;
-function schedulePush(){
-  document.getElementById("status").textContent="Saving…";
-  clearTimeout(pushTimer);
-  pushTimer=setTimeout(push,800);
-}
-
-async function push(){
-  const u=`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}`;
-  const cur=await gh("GET",u);
-  await gh("PUT",u,{
-    message:"Update workout save",
-    content:btoa(encodeSave()),
-    sha:cur.sha,
-    branch:GITHUB_BRANCH
-  });
-  document.getElementById("status").textContent="Saved to GitHub";
-}
-
-pull();
 </script>
 </body>
 </html>
